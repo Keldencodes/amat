@@ -73,6 +73,28 @@ def can_alpha_req(xcg, xc, xf, xw, bc, bw, bf, cc, cf, cw, airfoil_c, airfoil_f,
     with open(airfoil_w_path, 'r') as infile:
         x_w, y_w = np.loadtxt(infile, unpack=True, skiprows=1)    
     
+    #running xfoil
+    start = 0
+    stop = 20
+    num = 50
+    alphas = np.linspace(start=start, stop=stop, num=num)
+    naca = False
+    
+    foil = f'data/{airfoil_c}.dat'
+    p.GetPolar(foil, naca, alphas, Re_c, pane=True)
+    foil = f'data/{airfoil_f}.dat'
+    p.GetPolar(foil, naca, alphas, Re_f, pane=True)
+    foil = f'data/{airfoil_w}.dat'
+    p.GetPolar(foil, naca, alphas, Re_w, pane=True)
+    
+    f_c = f'data/{airfoil_c}/{airfoil_c}_polar_Re{Re_c:.2e}a{start:.2f}-{stop:.2f}.dat'
+    canard_data = np.loadtxt(f_c, unpack=True, skiprows=12)
+    f_f = f'data/{airfoil_f}/{airfoil_f}_polar_Re{Re_f:.2e}a{start:.2f}-{stop:.2f}.dat'
+    fuselage_data = np.loadtxt(f_f, unpack=True, skiprows=12)
+    f_w = f'data/{airfoil_w}/{airfoil_w}_polar_Re{Re_w:.2e}a{start:.2f}-{stop:.2f}.dat'
+    wing_data = np.loadtxt(f_w, unpack=True, skiprows=12)
+    
+    
     
     
 def total_lift(bc, bw, bf, u_inf, alf_main, alf_c):
@@ -80,6 +102,8 @@ def total_lift(bc, bw, bf, u_inf, alf_main, alf_c):
     Sc = c.in2m(cc) * c.in2m(bc)
     Sf = c.in2m(cf) * c.in2m(bf)
     Sw = c.in2m(cw) * c.in2m(bw)
+    
+    
     
     
     
