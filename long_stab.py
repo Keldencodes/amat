@@ -97,6 +97,7 @@ def can_alpha_req(xcg, xc, xf, xw, bc, bw, bf, cc, cf, cw, airfoil_c, airfoil_f,
     
     
     
+    
 def total_lift(bc, bw, bf, u_inf, alf_main, alf_c):
     # calculate total lift of aircraft
     Sc = c.in2m(cc) * c.in2m(bc)
