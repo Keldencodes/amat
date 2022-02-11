@@ -84,6 +84,7 @@ def can_alpha_req(xcg, xc, xf, xw, bc, bw, bf, cc, cf, cw, airfoil_c, airfoil_f,
     f_f = f'data/{airfoil_f}/{airfoil_f}_polar_Re{Re_f:.2e}a{start:.1f}-{stop:.1f}.dat'
     f_w = f'data/{airfoil_w}/{airfoil_w}_polar_Re{Re_w:.2e}a{start:.1f}-{stop:.1f}.dat'
 
+    # if the xfoil data already exists, don't run it again
     if not os.path.exists(f_c):
         foil = f'data/{airfoil_c}.dat'
         p.GetPolar(foil, naca, alphas, Re_c, pane=True)
