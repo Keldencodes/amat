@@ -22,18 +22,18 @@ cc = 6
 cf = 55
 cw = 12
 
-u_inf = 20 # mph
+u_inf = 30 # mph
 
 rho = 1.225 # kg/m3
 mu = 1.802e-5 # kg/m*s
 
 W = 55 # lbs
 
-airfoil_c = 'naca2415'
+airfoil_c = 'naca0012'
 airfoil_f = 'n24'
 airfoil_w = 'naca2415'
 
-def can_alpha_req(xcg, xc, xf, xw, bc, bw, bf, cc, cf, cw, airfoil_c, airfoil_f, airfoil_w, rho, mu, W, u_inf):
+def equilibrium(xcg, xc, xf, xw, bc, bw, bf, cc, cf, cw, airfoil_c, airfoil_f, airfoil_w, rho, mu, W, u_inf):
     # calculate required alpha of canard with varying fuselage/wing alpha
     # conversions
     cc = c.in2m(cc)
@@ -49,7 +49,7 @@ def can_alpha_req(xcg, xc, xf, xw, bc, bw, bf, cc, cf, cw, airfoil_c, airfoil_f,
     xf = c.in2m(xf)
     xw = c.in2m(xw)
     
-    u_inf = c.ftpers2mpers(c.mph2ftpers(u_inf))
+    u_inf = c.mph2mpers(u_inf)
     
     # surface areas
     Sc = cc * bc
@@ -74,40 +74,75 @@ def can_alpha_req(xcg, xc, xf, xw, bc, bw, bf, cc, cf, cw, airfoil_c, airfoil_f,
         x_w, y_w = np.loadtxt(infile, unpack=True, skiprows=1)    
     
     #running xfoil
-    start = 0
-    stop = 20
-    num = 50
-    alphas = np.linspace(start=start, stop=stop, num=num)
+    start_c = -10
+    stop_c = 15
+    num_c = 301
+    alphas_c = np.linspace(start=start_c, stop=stop_c, num=num_c)
+    start_f = -10
+    stop_f = 15
+    num_f = 301
+    alphas_f = np.linspace(start=start_f, stop=stop_f, num=num_f)
+    start_w = -10
+    stop_w = 15
+    num_w = 301
+    alphas_w = np.linspace(start=start_w, stop=stop_w, num=num_w)
     naca = False
     
-    f_c = f'data/{airfoil_c}/{airfoil_c}_polar_Re{Re_c:.2e}a{start:.1f}-{stop:.1f}.dat'
-    f_f = f'data/{airfoil_f}/{airfoil_f}_polar_Re{Re_f:.2e}a{start:.1f}-{stop:.1f}.dat'
-    f_w = f'data/{airfoil_w}/{airfoil_w}_polar_Re{Re_w:.2e}a{start:.1f}-{stop:.1f}.dat'
+    f_c = f'data/{airfoil_c}/{airfoil_c}_polar_Re{Re_c:.2e}a{start_c:.1f}-{stop_c:.1f}.dat'
+    f_f = f'data/{airfoil_f}/{airfoil_f}_polar_Re{Re_f:.2e}a{start_f:.1f}-{stop_f:.1f}.dat'
+    f_w = f'data/{airfoil_w}/{airfoil_w}_polar_Re{Re_w:.2e}a{start_w:.1f}-{stop_w:.1f}.dat'
 
     # if the xfoil data already exists, don't run it again
     if not os.path.exists(f_c):
         foil = f'data/{airfoil_c}.dat'
-        p.GetPolar(foil, naca, alphas, Re_c, pane=True)
+        p.GetPolar(foil, naca, alphas_c, Re_c, pane=True)
         print('did xfoil')
 
     if not os.path.exists(f_f):
         foil = f'data/{airfoil_f}.dat'
-        p.GetPolar(foil, naca, alphas, Re_f, pane=True)
+        p.GetPolar(foil, naca, alphas_f, Re_f, pane=True)
         print('did xfoil')
 
     if not os.path.exists(f_w):
         foil = f'data/{airfoil_w}.dat'
-        p.GetPolar(foil, naca, alphas, Re_w, pane=True)
+        p.GetPolar(foil, naca, alphas_w, Re_w, pane=True)
         print('did xfoil')
   
     canard_data = np.loadtxt(f_c, unpack=True, skiprows=12)
     fuselage_data = np.loadtxt(f_f, unpack=True, skiprows=12)
     wing_data = np.loadtxt(f_w, unpack=True, skiprows=12)
-    
-    
-    
-    
 
+    # plot cl vs a for each
+    plt.figure(figsize=(10,10))
+    plt.plot(canard_data[0], canard_data[1], 'r', label=f'Canard: {airfoil_c}')
+    plt.plot(fuselage_data[0], fuselage_data[1], 'g', label=f'Fuselage: {airfoil_f}')
+    plt.plot(wing_data[0], wing_data[1], 'b', label=f'Wing: {airfoil_w}')
+    plt.legend()
+    plt.xlabel('alpha')
+    plt.ylabel('Cl')
+    #plt.show()
+
+    alpha = 1.0
+    result = np.where(canard_data[0]==alpha)
+    clc = canard_data[1][result[0][0]]
+    print(clc)
+
+    result = np.where(fuselage_data[0]==alpha)
+    clf = fuselage_data[1][result[0][0]]
+    print(clf)
+
+    result = np.where(wing_data[0]==alpha)
+    clw = wing_data[1][result[0][0]]
+    print(clw)
+
+    Lc = .5 * clc * rho * (u_inf**2) * Sc
+    Lw = .5 * clw * rho * (u_inf**2) * Sw
+    Lf = .5 * clf * rho * (u_inf**2) * Sf
+    print(Lc)
+    print(Lw)
+    print(Lf)
+    print(f'total lift: {Lc+Lw+Lf}kg, {(Lc+Lw+Lf)*2.2}lbs')
+    
     
 def total_lift(alpha_c, alpha_wf, bc, bw, bf, cc, cf, cw, airfoil_c, airfoil_f, airfoil_w, rho, mu, W, u_inf):
     # calculate total lift at given angles of attack
@@ -177,4 +212,5 @@ def total_lift(alpha_c, alpha_wf, bc, bw, bf, cc, cf, cw, airfoil_c, airfoil_f, 
     
     
     
-can_alpha_req(xcg, xc, xf, xw, bc, bw, bf, cc, cf, cw, airfoil_c, airfoil_f, airfoil_w, rho, mu, W, u_inf)
+    
+equilibrium(xcg, xc, xf, xw, bc, bw, bf, cc, cf, cw, airfoil_c, airfoil_f, airfoil_w, rho, mu, W, u_inf)
