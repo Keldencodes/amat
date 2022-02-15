@@ -76,15 +76,15 @@ def equilibrium(xcg, xc, xf, xw, bc, bw, bf, cc, cf, cw, airfoil_c, airfoil_f, a
     #running xfoil
     start_c = -10
     stop_c = 15
-    num_c = 301
+    num_c = (stop_c-start_c)*5 + 1
     alphas_c = np.linspace(start=start_c, stop=stop_c, num=num_c)
     start_f = -10
     stop_f = 15
-    num_f = 301
+    num_f = (stop_f-start_f)*5 + 1
     alphas_f = np.linspace(start=start_f, stop=stop_f, num=num_f)
     start_w = -10
     stop_w = 15
-    num_w = 301
+    num_w = (stop_w-start_w)*5 + 1
     alphas_w = np.linspace(start=start_w, stop=stop_w, num=num_w)
     naca = False
     
