@@ -24,3 +24,6 @@ def in2m(l):
 
 def m2in(l):
     return l/0.0254
+
+def interpolate(x1, y1, x2, y2, x3):
+    return (y2-y1)*(x3-x1)/(x2-x1)+y1

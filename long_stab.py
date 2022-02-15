@@ -5,23 +5,22 @@ import os
 import pyxfoil as p
 
 # define some constants
-
-# distances in inches
-xcg = 72 # center of gravity location from leading edge of fuselage
-xc = 4
-xf = 36
-xw = 66
-
 # spans in inches
 bc = 24 # canard
-bw = 95 # wing
-bf = 24 # fuselage
+bw = 90 # wing
+bf = 20 # fuselage with 2 columns of soccer balls
 
 # chords in inches
 cc = 6
-cf = 55
+cf = 10/.171 # using 1 row of soccer balls to define fuselage size
 cw = 12
 
+# distances in inches to xac and xcg
+xc = cc/4 + 3
+xf = cf/4
+xw = cf - 3/4*cw # place trailing edge of wing coincident with TE of fuselage
+xcg = xw - 4 # center of gravity location from leading edge of fuselage
+# should probably define the cg later using the xac=xcg large xbarac function
 u_inf = 30 # mph
 
 rho = 1.225 # kg/m3
@@ -124,24 +123,58 @@ def equilibrium(xcg, xc, xf, xw, bc, bw, bf, cc, cf, cw, airfoil_c, airfoil_f, a
 
     alpha = 1.0
     result = np.where(canard_data[0]==alpha)
-    clc = canard_data[1][result[0][0]]
-    print(clc)
-
+    if result[0].size==0:
+       print('interpolating')
+       alpha1 = max(canard_data[0]<alpha)
+       alpha1_index = np.where(canard_data[0]==alpha1)
+       alpha2 = min(canard_data[0]>alpha)
+       alpha2_index = np.where(canard_data[0]==alpha2)
+       cl1 = max(canard_data[1][alpha1_index])
+       cl2 = min(canard_data[1][alpha2_index])
+       clc = c.interpolate(x1=alpha1, y1=cl1, x2=alpha2, y2=cl2, x3=alpha)
+    else:
+       clc = canard_data[1][result[0][0]]
+ 
     result = np.where(fuselage_data[0]==alpha)
-    clf = fuselage_data[1][result[0][0]]
-    print(clf)
-
+    if result[0].size==0:
+       print('interpolating')
+       alpha1 = max(fuselage_data[0])
+       alpha1_index = np.where(fuselage_data[0]==alpha1)
+       alpha2 = min(fuselage_data[0]>alpha)
+       alpha2_index = np.where(fuselage_data[0]==alpha2)
+       cl1 = max(fuselage_data[1][alpha1_index])
+       cl2 = min(fuselage_data[1][alpha2_index])
+       clf = c.interpolate(alpha1, cl1, alpha2, cl2, alpha)
+    else:
+       clf = fuselage_data[1][result[0][0]]
+ 
     result = np.where(wing_data[0]==alpha)
-    clw = wing_data[1][result[0][0]]
-    print(clw)
+    if result[0].size==0:
+       print('interpolating')
+       alpha1 = max(wing_data[0]<alpha)
+       alpha1_index = np.where(wing_data[0]==alpha1)
+       alpha2 = min(wing_data[0]>alpha)
+       alpha2_index = np.where(wing_data[0]==alpha2)
+       cl1 = max(wing_data[1][alpha1_index])
+       cl2 = min(wing_data[1][alpha2_index])
+       clw = c.interpolate(alpha1, cl1, alpha2, cl2, alpha)
+    else:
+       clw = wing_data[1][result[0][0]]
+      
 
     Lc = .5 * clc * rho * (u_inf**2) * Sc
     Lw = .5 * clw * rho * (u_inf**2) * Sw
     Lf = .5 * clf * rho * (u_inf**2) * Sf
-    print(Lc)
-    print(Lw)
-    print(Lf)
-    print(f'total lift: {Lc+Lw+Lf}kg, {(Lc+Lw+Lf)*2.2}lbs')
+  
+    print(f'*********************************************** \n Results')
+    print(f'Relative airspeed = {c.mpers2mph(u_inf):.1f}mph')
+    print(f'Fuselage size \n Chord = {(c.m2in(cf)):.1f}in \n Span = {(c.m2in(bf)):.1f}in \n Area = {(c.m2in(cf)*c.m2in(bf)):.2f}in2')
+    print(f'Wing size \n Chord = {(c.m2in(cw)):.1f}in \n Span = {(c.m2in(bw)):.1f}in \n Area = {(c.m2in(cw)*c.m2in(bw)):.2f}in2')
+    print(f'Canard size \n Chord = {(c.m2in(cc)):.1f}in \n Span = {(c.m2in(bc)):.1f}in \n Area = {(c.m2in(cc)*c.m2in(bc)):.2f}in2')
+    print(f'Canard lift: Cl = {clc}, L = {Lc:.2f}kg')
+    print(f'Wing lift: CL = {clw}, L = {Lw:.2f}kg')
+    print(f'Fuselage lift: Cl = {clf}, L = {Lf:.2f}kg')
+    print(f'Total lift: {(Lc+Lw+Lf):.2f}kg, {((Lc+Lw+Lf)*2.2):.2f}lbs')
     
     
 def total_lift(alpha_c, alpha_wf, bc, bw, bf, cc, cf, cw, airfoil_c, airfoil_f, airfoil_w, rho, mu, W, u_inf):
