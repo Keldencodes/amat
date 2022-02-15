@@ -25,5 +25,23 @@ def in2m(l):
 def m2in(l):
     return l/0.0254
 
+def n2kg(m):
+    return m*0.10197
+
+def kg2n(m):
+    return m/0.10197
+
+def kg2pound(m):
+    return m*2.2
+
+def pound2kg(m):
+    return m/2.2
+
+def n2pound(m):
+    return m*0.22480
+
+def pound2n(m):
+    return m/0.22480
+
 def interpolate(x1, y1, x2, y2, x3):
     return (y2-y1)*(x3-x1)/(x2-x1)+y1
