@@ -13,30 +13,34 @@ bf = 22 # fuselage with 2 columns of soccer balls
 # chords in inches
 cc = 12
 cf = 10/.171 # using 1 row of soccer balls to define fuselage size
+#cf2 = 10/.22
 cw = 20
 
 # distances in inches to xac and xcg
-xc = cc/4 + 3
+xc = cc/4
 xf = cf/4
+#xf2 = cf2/4
 xw = cf - 3/4*cw # place trailing edge of wing coincident with TE of fuselage
-xcg = 27.5 # center of gravity location from leading edge of fuselage
+xcg = np.linspace(30, 15, 41) # center of gravity location from leading edge of fuselage
 # should probably define the cg later using the xac=xcg large xbarac function
-u_inf = 25 # mph
+u_inf = 30 # mph
 
 rho = 1.225 # kg/m3
 mu = 1.802e-5 # kg/m*s
 
-W = 55 # lbs
+w = 55 # lbs
 
 airfoil_c = 'naca0012'
 airfoil_f = 'n24'
+#airfoil_f2 = '2422'
 airfoil_w = 'naca2415'
 
-def equilibrium(xcg, xc, xf, xw, bc, bw, bf, cc, cf, cw, airfoil_c, airfoil_f, airfoil_w, rho, mu, W, u_inf):
+def equilibrium(xcg, xc, xf, xw, bc, bw, bf, cc, cf, cw, airfoil_c, airfoil_f, airfoil_w, rho, mu, w, u_inf):
     # calculate required alpha of canard with varying fuselage/wing alpha
     # conversions
     cc = c.in2m(cc)
     cf = c.in2m(cf)
+    #cf2 = c.in2m(cf2)
     cw = c.in2m(cw)
     
     bc = c.in2m(bc)
@@ -49,15 +53,18 @@ def equilibrium(xcg, xc, xf, xw, bc, bw, bf, cc, cf, cw, airfoil_c, airfoil_f, a
     xw = c.in2m(xw)
     
     u_inf = c.mph2mpers(u_inf)
+    w = c.pound2n(w)
     
     # surface areas in m2
     Sc = cc * bc
     Sf = cf * bf
+    #Sf2 = cf2 * bf
     Sw = cw * bw
     
     # reynolds of each 'wing'
     Re_c = rho * u_inf * cc / mu
     Re_f = rho * u_inf * cf / mu
+    #Re_f2 = rho * u_inf * cf2 / mu
     Re_w = rho * u_inf * cw / mu
     
     airfoil_c_path = os.path.join('data', f'{airfoil_c}.dat')
@@ -85,167 +92,141 @@ def equilibrium(xcg, xc, xf, xw, bc, bw, bf, cc, cf, cw, airfoil_c, airfoil_f, a
     stop_w = 25
     num_w = (stop_w-start_w)*10 + 1
     alphas_w = np.linspace(start=start_w, stop=stop_w, num=num_w)
-    naca = False
+
     
     f_c = f'data/{airfoil_c}/{airfoil_c}_polar_Re{Re_c:.2e}a{start_c:.1f}-{stop_c:.1f}.dat'
     f_f = f'data/{airfoil_f}/{airfoil_f}_polar_Re{Re_f:.2e}a{start_f:.1f}-{stop_f:.1f}.dat'
+    #f_f2 = f'data/naca{airfoil_f2}/naca{airfoil_f2}_polar_Re{Re_f2:.2e}a{start_f:.1f}-{stop_f:.1f}.dat'
     f_w = f'data/{airfoil_w}/{airfoil_w}_polar_Re{Re_w:.2e}a{start_w:.1f}-{stop_w:.1f}.dat'
 
     # if the xfoil data already exists, don't run it again
     if not os.path.exists(f_c):
+        naca = False
         foil = f'data/{airfoil_c}.dat'
         p.GetPolar(foil, naca, alphas_c, Re_c, pane=True)
         print('did xfoil')
 
     if not os.path.exists(f_f):
+        naca = False
         foil = f'data/{airfoil_f}.dat'
         p.GetPolar(foil, naca, alphas_f, Re_f, pane=True)
         print('did xfoil')
 
+    # if not os.path.exists(f_f2):
+    #     naca = True
+    #     foil = airfoil_f2
+    #     p.GetPolar(foil, naca, alphas_f, Re_f2, pane=True)
+    #     print('did xfoil')
+    
     if not os.path.exists(f_w):
+        naca = False
         foil = f'data/{airfoil_w}.dat'
         p.GetPolar(foil, naca, alphas_w, Re_w, pane=True)
         print('did xfoil')
   
     canard_data = np.loadtxt(f_c, unpack=True, skiprows=12)
     fuselage_data = np.loadtxt(f_f, unpack=True, skiprows=12)
+    #fuselage2_data = np.loadtxt(f_f2, unpack=True, skiprows=12)
     wing_data = np.loadtxt(f_w, unpack=True, skiprows=12)
 
     # plot cl vs a for each
-    plt.figure(figsize=(10,10))
-    plt.plot(canard_data[0], canard_data[1], 'r', label=f'Canard: {airfoil_c}')
-    plt.plot(fuselage_data[0], fuselage_data[1], 'g', label=f'Fuselage: {airfoil_f}')
-    plt.plot(wing_data[0], wing_data[1], 'b', label=f'Wing: {airfoil_w}')
-    plt.legend()
-    plt.xlabel('alpha')
-    plt.ylabel('Cl')
+    fig = plt.figure(figsize=(10, 10))
+    ax1 = fig.add_subplot(121)
+    ax2 = fig.add_subplot(122)
+    ax1.plot(canard_data[0], canard_data[1], 'r', label=f'Canard: {airfoil_c}')
+    ax1.plot(fuselage_data[0], fuselage_data[1], 'g', label=f'Fuselage: {airfoil_f}')
+    #ax1.plot(fuselage2_data[0], fuselage2_data[1], 'm', label=f'Fuselage2: {airfoil_f2}')
+    ax1.plot(wing_data[0], wing_data[1], 'b', label=f'Wing: {airfoil_w}')
+    ax1.legend()
+    ax1.set_xlabel('alpha')
+    ax1.set_ylabel('Cl')
+
+    # plot cd vs a for each
+    ax2.plot(canard_data[0], canard_data[2], 'r', label=f'Canard: {airfoil_c}')
+    ax2.plot(fuselage_data[0], fuselage_data[2], 'g', label=f'Fuselage: {airfoil_f}')
+    #ax2.plot(fuselage2_data[0], fuselage2_data[2], 'm', label=f'Fuselage2: {airfoil_f2}')
+    ax2.plot(wing_data[0], wing_data[2], 'b', label=f'Wing: {airfoil_w}')
+    ax2.legend()
+    ax2.set_xlabel('alpha')
+    ax2.set_ylabel('Cd')
     plt.show()
 
-    alpha_c = 9
-    result = np.where(canard_data[0]==alpha_c)
-    if result[0].size==0:
-       alpha1_index = max(np.where(canard_data[0]<alpha_c)[0])
-       alpha2_index = alpha1_index + 1
-       alpha1 = canard_data[0][alpha1_index]
-       alpha2 = canard_data[0][alpha2_index]
-       cl1 = canard_data[1][alpha1_index]
-       cl2 = canard_data[1][alpha2_index]
-       clc = c.interpolate(x1=alpha1, y1=cl1, x2=alpha2, y2=cl2, x3=alpha)
-    else:
-       clc = canard_data[1][result[0][0]]
+    alpha_c = canard_data[0][np.where(canard_data[1]==max(canard_data[1]))[0][0]] # stall angle
+    clc, cdc = find_cl_cd(alpha_c, canard_data)
 
-    alpha = 14.0
-    result = np.where(fuselage_data[0]==alpha)
-    if result[0].size==0:
-       alpha1_index = max(np.where(fuselage_data[0]<alpha)[0])
-       alpha2_index = alpha1_index + 1
-       alpha1 = fuselage_data[0][alpha1_index]
-       alpha2 = fuselage_data[0][alpha2_index]
-       cl1 = fuselage_data[1][alpha1_index]
-       cl2 = fuselage_data[1][alpha2_index]
-       clf = c.interpolate(alpha1, cl1, alpha2, cl2, alpha)
-    else:
-       clf = fuselage_data[1][result[0][0]]
- 
-    result = np.where(wing_data[0]==alpha)
-    if result[0].size==0:
-       alpha1_index = max(np.where(wing_data[0]<alpha)[0])
-       alpha2_index = alpha1_index + 1
-       alpha1 = wing_data[0][alpha1_index]
-       alpha2 = wing_data[0][alpha2_index]
-       cl1 = wing_data[1][alpha1_index]
-       cl2 = wing_data[1][alpha2_index]
-       clw = c.interpolate(alpha1, cl1, alpha2, cl2, alpha)
-    else:
-       clw = wing_data[1][result[0][0]]
-      
+    alphaf = fuselage_data[0][np.where(fuselage_data[1]==max(fuselage_data[1]))[0][0]] # stall angle
+    alphaw = wing_data[0][np.where(wing_data[1]==max(wing_data[1]))[0][0]] # stall angle
+    alpha = min(alphaf, alphaw) # smaller of the wing and fuselage stall angles
+    clf, cdf = find_cl_cd(alpha, fuselage_data)
+    #clf2, cdf2 = find_cl_cd(alpha, fuselage2_data)
 
+    clw, cdw = find_cl_cd(alpha, wing_data)
+    
     Lc = .5 * clc * rho * (u_inf**2) * Sc
     Lw = .5 * clw * rho * (u_inf**2) * Sw
     Lf = .5 * clf * rho * (u_inf**2) * Sf
+    #Lf2 = .5 * clf2 * rho * (u_inf**2) * Sf
 
-    l = (rho*(u_inf**2))/(2*(xcg-xc)) * (clw*Sw*(xw-xc) + clf*Sf*(xf-xc))
-    print(f'Lift: {c.n2pound(l):.2f}')
+    Dc = .5 * cdc * rho * (u_inf**2) * Sc
+    Dw = .5 * cdw * rho * (u_inf**2) * Sw
+    Df = .5 * cdf * rho * (u_inf**2) * Sf
+    #Df2 = .5 * cdf2 * rho * (u_inf**2) * Sf
 
-    print(f'*********************************************** \n Results')
+    if type(xcg)==np.ndarray:
+        all_done = False
+        for i in xcg:
+            l = (rho*(u_inf**2))/(2*(i-xc)) * (clw*Sw*(xw-xc) + clf*Sf*(xf-xc)) # lift of wing and fuselage about x_canard
+            if l-w >= 0: # want the wing and fuselage pitch about the x_canard to outweigh mass pitch about x_canard
+                total_lift = Lc+Lw+Lf
+                if total_lift >= w:
+                    l_c = (Lw*(xw-i)+Lf*(xf-i))/(i-xc) # lift of wing required in moment eq about cg
+                    if Lc <= l_c: # want the canard to be stalled before the others
+                        # print(f'canard moment lift required: {l_c:.3f}N')
+                        # print(f'max L_c: {Lc:.3f}N')
+                        xcg_i = i
+                        all_done = True
+                        break
+        if all_done == False:
+            xcg_i = i
+    else:
+        l = (rho*(u_inf**2))/(2*(xcg-xc)) * (clw*Sw*(xw-xc) + clf*Sf*(xf-xc))
+    
+    print('**********************************************')
+    print('Results')
+    print(f'Aircraft mass: {c.n2pound(w)} lbs')
+    print(f'Pitching Lift: {(c.n2pound(l-w)):.2f}')
+    print(f'Total lift: {(Lc+Lw+Lf):.2f}N, {c.n2pound(Lc+Lw+Lf):.2f}lbs')
+    print(f'Total drag = {(Dc+Dw+Df):.2f}N, {c.n2pound(Dc+Dw+Df):.2f}lbs')
     print(f'Relative airspeed = {c.mpers2mph(u_inf):.1f}mph')
-    print(f'Xcg = {c.m2in(xcg):.2f}')
+    print(f'Xcg = {c.m2in(xcg_i):.2f}in')
     print(f'Fuselage size \n Chord = {(c.m2in(cf)):.1f}in \n Span = {(c.m2in(bf)):.1f}in \n Area = {(c.m2in(cf)*c.m2in(bf)):.2f}in2')
+    #print(f'Fuselage2 size \n Chord = {(c.m2in(cf2)):.1f}in \n Span = {(c.m2in(bf)):.1f}in \n Area = {(c.m2in(cf2)*c.m2in(bf)):.2f}in2')
     print(f'Wing size \n Chord = {(c.m2in(cw)):.1f}in \n Span = {(c.m2in(bw)):.1f}in \n Area = {(c.m2in(cw)*c.m2in(bw)):.2f}in2')
     print(f'Canard size \n Chord = {(c.m2in(cc)):.1f}in \n Span = {(c.m2in(bc)):.1f}in \n Area = {(c.m2in(cc)*c.m2in(bc)):.2f}in2')
-    print(f'Canard lift: Cl = {clc:.3f}, L = {Lc:.2f}N = {c.n2pound(Lc):.2f}lbs')
-    print(f'Wing lift: CL = {clw:.3f}, L = {Lw:.2f}N = {c.n2pound(Lw):.2f}lbs')
-    print(f'Fuselage lift: Cl = {clf:.3f}, L = {Lf:.2f}N = {c.n2pound(Lf):.2f}lbs')
-    print(f'Total lift: {(Lc+Lw+Lf):.2f}N, {c.n2pound(Lc+Lw+Lf):.2f}lbs')
+    print(f'Fuselage \n Lift: Cl = {clf:.3f}, L = {Lf:.2f}N = {c.n2pound(Lf):.2f}lbs \n Drag: Cd = {cdf:.3f}, D = {Df:.2f}N = {c.n2pound(Df):.2f}lbs \n alpha: {alpha} deg \n Re: {Re_f:.2f}')
+    print(f'Wing \n Lift: CL = {clw:.3f}, L = {Lw:.2f}N = {c.n2pound(Lw):.2f}lbs \n Drag: Cd = {cdw:.3f}, D = {Dw:.2f}N = {c.n2pound(Dw):.2f}lbs \n alpha: {alpha} deg \n Re: {Re_w:.2f}')
+    print(f'Canard \n Lift: Cl = {clc:.3f}, L = {Lc:.2f}N = {c.n2pound(Lc):.2f}lbs \n Drag: Cd = {cdc:.3f}, D = {Dc:.2f}N = {c.n2pound(Dc):.2f}lbs \n alpha: {alpha_c} deg \n Re: {Re_c:.2f}')
     
+    # print(f'Fuselage2 lift: Cl = {clf2:.3f}, L = {Lf2:.2f}N = {c.n2pound(Lf2):.2f}lbs')
+    # print(f'Fuselage2 drag: Cd = {cdf2:.3f}, L = {Df2:.2f}N = {c.n2pound(Df2):.2f}lbs')
+    # print(f'Fuselage2 Re = {Re_f2:.2f}')
     
-def total_lift(alpha_c, alpha_wf, bc, bw, bf, cc, cf, cw, airfoil_c, airfoil_f, airfoil_w, rho, mu, W, u_inf):
-    # calculate total lift at given angles of attack
-    # conversions
-    cc = c.in2m(cc)
-    cf = c.in2m(cf)
-    cw = c.in2m(cw)
+def find_cl_cd(alpha, data):
+    result = np.where(data[0]==alpha)
+    if result[0].size==0:
+       alpha1_index = max(np.where(data[0]<alpha)[0])
+       alpha2_index = alpha1_index + 1
+       alpha1 = data[0][alpha1_index]
+       alpha2 = data[0][alpha2_index]
+       cl1 = data[1][alpha1_index]
+       cl2 = data[1][alpha2_index]
+       cl = c.interpolate(alpha1, cl1, alpha2, cl2, alpha)
+       cd1 = data[2][alpha1_index]
+       cd2 = data[2][alpha2_index]
+       cd = c.interpolate(x1=alpha1, y1=cd1, x2=alpha2, y2=cd2, x3=alpha)
+    else:
+       cd = data[2][result[0][0]]
+       cl = data[1][result[0][0]]
+    return cl, cd    
     
-    bc = c.in2m(bc)
-    bf = c.in2m(bf)
-    bw = c.in2m(bw)
-    
-    u_inf = c.ftpers2mpers(c.mph2ftpers(u_inf))
-    
-    # surface areas
-    Sc = cc * bc
-    Sf = cf * bf
-    Sw = cw * bw
-    
-    # reynolds of each 'wing'
-    Re_c = rho * u_inf * cc / mu
-    Re_f = rho * u_inf * cf / mu
-    Re_w = rho * u_inf * cw / mu
-    
-    airfoil_c_path = os.path.join('data', f'{airfoil_c}.dat')
-    with open(airfoil_c_path, 'r') as infile:
-        x_c, y_c = np.loadtxt(infile, unpack=True, skiprows=1)
-        
-    airfoil_f_path = os.path.join('data', f'{airfoil_f}.dat')
-    with open(airfoil_f_path, 'r') as infile:
-        x_f, y_f = np.loadtxt(infile, unpack=True, skiprows=1)
-    
-    airfoil_w_path = os.path.join('data', f'{airfoil_w}.dat')
-    with open(airfoil_w_path, 'r') as infile:
-        x_w, y_w = np.loadtxt(infile, unpack=True, skiprows=1)    
-    
-    #running xfoil
-    start = 0
-    stop = 20
-    num = 50
-    alphas = np.linspace(start=start, stop=stop, num=num)
-    naca = False
-    
-    f_c = f'data/{airfoil_c}/{airfoil_c}_polar_Re{Re_c:.2e}a{start:.1f}-{stop:.1f}.dat'
-    f_f = f'data/{airfoil_f}/{airfoil_f}_polar_Re{Re_f:.2e}a{start:.1f}-{stop:.1f}.dat'
-    f_w = f'data/{airfoil_w}/{airfoil_w}_polar_Re{Re_w:.2e}a{start:.1f}-{stop:.1f}.dat'
-
-    if not os.path.exists(f_c):
-        foil = f'data/{airfoil_c}.dat'
-        p.GetPolar(foil, naca, alphas, Re_c, pane=True)
-        print(f'did xfoil on {airfoil_c}')
-
-    if not os.path.exists(f_f):
-        foil = f'data/{airfoil_f}.dat'
-        p.GetPolar(foil, naca, alphas, Re_f, pane=True)
-        print(f'did xfoil on {airfoil_f}')
-
-    if not os.path.exists(f_w):
-        foil = f'data/{airfoil_w}.dat'
-        p.GetPolar(foil, naca, alphas, Re_w, pane=True)
-        print(f'did xfoil on {airfoil_w}')
-  
-    canard_data = np.loadtxt(f_c, unpack=True, skiprows=12)
-    fuselage_data = np.loadtxt(f_f, unpack=True, skiprows=12)
-    wing_data = np.loadtxt(f_w, unpack=True, skiprows=12)
-    
-    
-    
-    
-    
-equilibrium(xcg, xc, xf, xw, bc, bw, bf, cc, cf, cw, airfoil_c, airfoil_f, airfoil_w, rho, mu, W, u_inf)
+equilibrium(xcg, xc, xf, xw, bc, bw, bf, cc, cf, cw, airfoil_c, airfoil_f, airfoil_w, rho, mu, w, u_inf)

@@ -1,6 +1,3 @@
-from this import d
-
-
 def ftpers2mph(v):
     return v*0.681818
 
