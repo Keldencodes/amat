@@ -156,7 +156,7 @@ def equilibrium(xcg, xc, xf, xw, bc, bw, bf, cc, cf, cw, airfoil_c, airfoil_f, a
 
     alphaf = fuselage_data[0][np.where(fuselage_data[1]==max(fuselage_data[1]))[0][0]] # stall angle
     alphaw = wing_data[0][np.where(wing_data[1]==max(wing_data[1]))[0][0]] # stall angle
-    alpha = min(alphaf, alphaw) # smaller of the wing and fuselage stall angles
+    alpha = 5 #min(alphaf, alphaw) # smaller of the wing and fuselage stall angles
     clf, cdf = find_cl_cd(alpha, fuselage_data)
     #clf2, cdf2 = find_cl_cd(alpha, fuselage2_data)
 
@@ -203,9 +203,12 @@ def equilibrium(xcg, xc, xf, xw, bc, bw, bf, cc, cf, cw, airfoil_c, airfoil_f, a
     #print(f'Fuselage2 size \n Chord = {(c.m2in(cf2)):.1f}in \n Span = {(c.m2in(bf)):.1f}in \n Area = {(c.m2in(cf2)*c.m2in(bf)):.2f}in2')
     print(f'Wing size \n Chord = {(c.m2in(cw)):.1f}in \n Span = {(c.m2in(bw)):.1f}in \n Area = {(c.m2in(cw)*c.m2in(bw)):.2f}in2')
     print(f'Canard size \n Chord = {(c.m2in(cc)):.1f}in \n Span = {(c.m2in(bc)):.1f}in \n Area = {(c.m2in(cc)*c.m2in(bc)):.2f}in2')
-    print(f'Fuselage \n Lift: Cl = {clf:.3f}, L = {Lf:.2f}N = {c.n2pound(Lf):.2f}lbs \n Drag: Cd = {cdf:.3f}, D = {Df:.2f}N = {c.n2pound(Df):.2f}lbs \n alpha: {alpha} deg \n Re: {Re_f:.2f}')
-    print(f'Wing \n Lift: CL = {clw:.3f}, L = {Lw:.2f}N = {c.n2pound(Lw):.2f}lbs \n Drag: Cd = {cdw:.3f}, D = {Dw:.2f}N = {c.n2pound(Dw):.2f}lbs \n alpha: {alpha} deg \n Re: {Re_w:.2f}')
-    print(f'Canard \n Lift: Cl = {clc:.3f}, L = {Lc:.2f}N = {c.n2pound(Lc):.2f}lbs \n Drag: Cd = {cdc:.3f}, D = {Dc:.2f}N = {c.n2pound(Dc):.2f}lbs \n alpha: {alpha_c} deg \n Re: {Re_c:.2f}')
+    print(f'Fuselage \n Lift: Cl = {clf:.3f}, L = {Lf:.2f}N = {c.n2pound(Lf):.2f}lbs \n Drag: Cd = {cdf:.3f}, D = {Df:.2f}N = {c.n2pound(Df):.2f}lbs \
+        \n alpha: {alpha} deg \n crit a: {fuselage_data[0][np.where(fuselage_data[1]==max(fuselage_data[1]))[0][0]]} \n Re: {Re_f:.2f}')
+    print(f'Wing \n Lift: CL = {clw:.3f}, L = {Lw:.2f}N = {c.n2pound(Lw):.2f}lbs \n Drag: Cd = {cdw:.3f}, D = {Dw:.2f}N = {c.n2pound(Dw):.2f}lbs \
+        \n alpha: {alpha} deg \n crit a: {wing_data[0][np.where(wing_data[1]==max(wing_data[1]))[0][0]]} \n Re: {Re_w:.2f}')
+    print(f'Canard \n Lift: Cl = {clc:.3f}, L = {Lc:.2f}N = {c.n2pound(Lc):.2f}lbs \n Drag: Cd = {cdc:.3f}, D = {Dc:.2f}N = {c.n2pound(Dc):.2f}lbs \
+        \n alpha: {alpha_c} deg \n crit a: {canard_data[0][np.where(canard_data[1]==max(canard_data[1]))[0][0]]} \n Re: {Re_c:.2f}')
     
     # print(f'Fuselage2 lift: Cl = {clf2:.3f}, L = {Lf2:.2f}N = {c.n2pound(Lf2):.2f}lbs')
     # print(f'Fuselage2 drag: Cd = {cdf2:.3f}, L = {Df2:.2f}N = {c.n2pound(Df2):.2f}lbs')
