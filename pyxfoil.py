@@ -409,7 +409,7 @@ def WriteXfoilFile(name, x, z):
 ########################################################################
 
 def GetPolar(foil='0012', naca=True, alfs=[0], Re=0,
-                SaveCP=True, Iter=100, pane=False,
+                SaveCP=False, Iter=100, pane=False,
                 overwrite=True, quiet=True):
     """For a single airfoil at a single Reynolds number,
     create a polar with given alphas.
