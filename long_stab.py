@@ -6,15 +6,15 @@ import pyxfoil as p
 
 # define some constants
 # spans in inches
-bc = 24 # canard
-bw = 90 # wing
-bf = 22 # fuselage with 2 columns of soccer balls
+bc = 36 # canard
+bw = 96 # wing
+bf = 24 # fuselage with 2 columns of soccer balls
 
 # chords in inches
-cc = 12
-cf = 10/.171 # using 1 row of soccer balls to define fuselage size
+cc = 8
+cf = 10/.22 # using 1 row of soccer balls to define fuselage size
 #cf2 = 10/.22
-cw = 20
+cw = 23
 
 # distances in inches to xac and xcg
 xc = cc/4
@@ -23,15 +23,15 @@ xf = cf/4
 xw = cf - 3/4*cw # place trailing edge of wing coincident with TE of fuselage
 xcg = np.linspace(30, 15, 41) # center of gravity location from leading edge of fuselage
 # should probably define the cg later using the xac=xcg large xbarac function
-u_inf = 30 # mph
+u_inf = 50 # mph
 
 rho = 1.225 # kg/m3
 mu = 1.802e-5 # kg/m*s
 
-w = 55 # lbs
+w = 40 # lbs
 
 airfoil_c = 'naca0012'
-airfoil_f = 'n24'
+airfoil_f = '2422'
 #airfoil_f2 = '2422'
 airfoil_w = 'naca2415'
 
@@ -71,9 +71,9 @@ def equilibrium(xcg, xc, xf, xw, bc, bw, bf, cc, cf, cw, airfoil_c, airfoil_f, a
     with open(airfoil_c_path, 'r') as infile:
         x_c, y_c = np.loadtxt(infile, unpack=True, skiprows=1)
         
-    airfoil_f_path = os.path.join('data', f'{airfoil_f}.dat')
-    with open(airfoil_f_path, 'r') as infile:
-        x_f, y_f = np.loadtxt(infile, unpack=True, skiprows=1)
+    # airfoil_f_path = os.path.join('data', f'{airfoil_f}.dat')
+    # with open(airfoil_f_path, 'r') as infile:
+    #     x_f, y_f = np.loadtxt(infile, unpack=True, skiprows=1)
     
     airfoil_w_path = os.path.join('data', f'{airfoil_w}.dat')
     with open(airfoil_w_path, 'r') as infile:
@@ -95,7 +95,7 @@ def equilibrium(xcg, xc, xf, xw, bc, bw, bf, cc, cf, cw, airfoil_c, airfoil_f, a
 
     
     f_c = f'data/{airfoil_c}/{airfoil_c}_polar_Re{Re_c:.2e}a{start_c:.1f}-{stop_c:.1f}.dat'
-    f_f = f'data/{airfoil_f}/{airfoil_f}_polar_Re{Re_f:.2e}a{start_f:.1f}-{stop_f:.1f}.dat'
+    f_f = f'data/naca{airfoil_f}/naca{airfoil_f}_polar_Re{Re_f:.2e}a{start_f:.1f}-{stop_f:.1f}.dat'
     #f_f2 = f'data/naca{airfoil_f2}/naca{airfoil_f2}_polar_Re{Re_f2:.2e}a{start_f:.1f}-{stop_f:.1f}.dat'
     f_w = f'data/{airfoil_w}/{airfoil_w}_polar_Re{Re_w:.2e}a{start_w:.1f}-{stop_w:.1f}.dat'
 
@@ -107,8 +107,8 @@ def equilibrium(xcg, xc, xf, xw, bc, bw, bf, cc, cf, cw, airfoil_c, airfoil_f, a
         print('did xfoil')
 
     if not os.path.exists(f_f):
-        naca = False
-        foil = f'data/{airfoil_f}.dat'
+        naca = True
+        foil = airfoil_f
         p.GetPolar(foil, naca, alphas_f, Re_f, pane=True)
         print('did xfoil')
 
@@ -151,16 +151,19 @@ def equilibrium(xcg, xc, xf, xw, bc, bw, bf, cc, cf, cw, airfoil_c, airfoil_f, a
     ax2.set_ylabel('Cd')
     plt.show()
 
-    alpha_c = canard_data[0][np.where(canard_data[1]==max(canard_data[1]))[0][0]] # stall angle
+    alpha_c = 2 #canard_data[0][np.where(canard_data[1]==max(canard_data[1]))[0][0]] # stall angle
     clc, cdc = find_cl_cd(alpha_c, canard_data)
+    cdc = cdc + (clc**2)/(np.pi*0.9*(bc/cc))
 
     alphaf = fuselage_data[0][np.where(fuselage_data[1]==max(fuselage_data[1]))[0][0]] # stall angle
     alphaw = wing_data[0][np.where(wing_data[1]==max(wing_data[1]))[0][0]] # stall angle
-    alpha = 5 #min(alphaf, alphaw) # smaller of the wing and fuselage stall angles
+    alpha = 0.5 #min(alphaf, alphaw) # smaller of the wing and fuselage stall angles
     clf, cdf = find_cl_cd(alpha, fuselage_data)
+    cdf = cdf + (clf**2)/(np.pi*0.9*(bf/cf))
     #clf2, cdf2 = find_cl_cd(alpha, fuselage2_data)
 
     clw, cdw = find_cl_cd(alpha, wing_data)
+    cdw = cdw + (clw**2)/(np.pi*0.9*(bw/cw))
     
     Lc = .5 * clc * rho * (u_inf**2) * Sc
     Lw = .5 * clw * rho * (u_inf**2) * Sw
