@@ -6,15 +6,15 @@ import pyxfoil as p
 
 # define some constants
 # spans in inches
-bc = 36 # canard
-bw = 96 # wing
-bf = 24 # fuselage with 2 columns of soccer balls
+bc = 38 # canard
+bw = 110 # wing
+bf = 10 # fuselage with 2 columns of soccer balls
 
 # chords in inches
 cc = 8
-cf = 10/.22 # using 1 row of soccer balls to define fuselage size
+cf = 48 # using 1 row of soccer balls to define fuselage size
 #cf2 = 10/.22
-cw = 23
+cw = 18
 
 # distances in inches to xac and xcg
 xc = cc/4
@@ -150,7 +150,7 @@ def equilibrium(xcg, xc, xf, xw, bc, bw, bf, cc, cf, cw, airfoil_c, airfoil_f, a
     ax2.legend()
     ax2.set_xlabel('alpha')
     ax2.set_ylabel('Cd')
-    plt.show()
+   # plt.show()
 
     alpha_c = 6 #canard_data[0][np.where(canard_data[1]==max(canard_data[1]))[0][0]] # stall angle
     clc, cdc = find_cl_cd(alpha_c, canard_data)
@@ -158,7 +158,7 @@ def equilibrium(xcg, xc, xf, xw, bc, bw, bf, cc, cf, cw, airfoil_c, airfoil_f, a
 
     alphaf = fuselage_data[0][np.where(fuselage_data[1]==max(fuselage_data[1]))[0][0]] # stall angle
     alphaw = wing_data[0][np.where(wing_data[1]==max(wing_data[1]))[0][0]] # stall angle
-    alpha = 4 #min(alphaf, alphaw) # smaller of the wing and fuselage stall angles
+    alpha = 0 #min(alphaf, alphaw) # smaller of the wing and fuselage stall angles
     
     clf, cdf = find_cl_cd(alpha, fuselage_data)
     cdf = cdf + (clf**2)/(np.pi*0.9*(bf/cf))
